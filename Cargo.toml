@@ -1,0 +1,10 @@
+[package]
+name = "boleto"
+version = "0.1.0"
+authors = ["PhdTrollSlayer <rodrigomauricio@protonmail.com>"]
+edition = "2018"
+
+[dependencies]
+chrono = "0.4"
+barcoders = {version = "0.10.0", features = ["image"]}
+argparse = "0.2.2"
