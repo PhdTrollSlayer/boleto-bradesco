@@ -19,6 +19,7 @@ use barcoders::generators::image::*;
 9: zero - 1
 */
 
+#[derive(Debug)]
 pub struct Code {
     id: String,
     moeda: String,
@@ -57,52 +58,54 @@ impl Code {
         }
     }
 
-    pub fn gen_code(&self) -> String {
+    pub fn codify(&self) -> String {
         let op = match self.dg_verificador.clone() {
             Some(x) => {x},
             None => {"".to_string()},
         };
 
         format!("{}{}{}{}{}{}{}{}{}{}", self.id,
-                    self.moeda,
-                    op,
-                    self.fator_venci,
-                    self.valor,
-                    self.agencia,
-                    self.carteira,
-                    self.nosso_numero,
-                    self.conta,
-                    self.zero)
+                                        self.moeda,
+                                        op,
+                                        self.fator_venci,
+                                        self.valor,
+                                        self.agencia,
+                                        self.carteira,
+                                        self.nosso_numero,
+                                        self.conta,
+                                        self.zero)
     }
 
-    pub fn gen_ver_digit(&mut self) {
-        let c = self.gen_code();
+    pub fn gen_ver_digit(&mut self) -> i32 {
+        let c = self.codify();
 
-        let mut mul = 2;
+        let mut mul: i32 = 2;
         let mut result: i32 = 0;
 
         for u in c.chars().rev() {
-            let x: i8 = u.to_string().parse().unwrap();
+            let x: i32 = u.to_string().parse().unwrap();
 
             if mul > 9 {
                 mul = 2;
             }
 
-            result += x as i32 * mul as i32;
+            result += x * mul;
             mul += 1;
         }
 
         let resto = 11 - (result % 11);
 
         if resto == 0 || resto == 1 || resto > 9 {
-            self.dg_verificador = Some("1".to_string())
+            self.dg_verificador = Some("1".to_string());
+            1
         } else {
-            self.dg_verificador = Some(resto.to_string())
+            self.dg_verificador = Some(resto.to_string());
+            resto
         }
     }
 
     pub fn gen_barcode(&self, p: &str) {
-        let bc = TF::interleaved(self.gen_code()).unwrap();
+        let bc = TF::interleaved(self.codify()).unwrap();
         let img = Image::png(80);
         let encoded = bc.encode();
 

@@ -36,9 +36,12 @@ fn main() {
     let mut agencia = String::new();
     let mut nosso_numero = String::new();
 
+    let mut output = String::from("codigo_de_barras.png");
+
     // Recupera argumentos e valores da linha de comando
     {
         let mut ap = ArgumentParser::new();
+
         ap.set_description("Criador de boletos do Banco Bradesco");
         ap.refer(&mut carteira)
             .add_option(&["-r"], Store, "Carteira (2 dígitos)");
@@ -49,15 +52,21 @@ fn main() {
         ap.refer(&mut agencia)
             .add_option(&["-a"], Store, "Agência (4 dígitos)");
         ap.refer(&mut nosso_numero)
-            .add_option(&["-n"], Store, "Nosso Numero (11 dígitos, opicional)");
+            .add_option(&["-n"], Store, "Nosso Numero (11 dígitos, opcional)");
         ap.refer(&mut venci)
-            .add_option(&["-d"], Store, "Data de vecncimento (Formato: 13/10/2019)");
+            .add_option(&["-d"], Store, "Data de vecncimento (Formato: dd/mm/aaaa)");
+        ap.refer(&mut output)
+            .add_option(&["-o"], Store, "Arquivo a ser criado para código de barras (Padrão: codigo_de_barras.png)");
 
         ap.parse_args_or_exit();
     }
 
     // Analisa dados e os organiza no formato correto
     let venci = parse_date(&venci);
+
+    if valor.len() < 1 || agencia.len() < 1 || conta.len() < 1 || carteira.len() < 1 {
+        panic!("Erro: Algum valor não foi inserido!")
+    }
 
     valor = fill_size(&valor, 10).unwrap();
     agencia = fill_size(&agencia, 4).unwrap();
@@ -68,14 +77,15 @@ fn main() {
     let fator_venci = (venci - zero_time).to_string();
 
     // -------------------------------------------------------------
-
     let mut codigo = Code::constructor(id, moeda, fator_venci, valor, agencia, carteira, nosso_numero, conta);
 
-    dbg!(codigo.gen_code());
     codigo.gen_ver_digit();
-    dbg!(codigo.gen_code());
+    println!("Dados: {:#?}", codigo);
+    println!("Codigo final: {}", codigo.codify());
 
-    codigo.gen_barcode("teste.png");
+    codigo.gen_barcode(&output);
+    println!("Código de barras gerado");
+
 
     // -------------------------------------------------------------
 }
