@@ -1,5 +1,7 @@
 # Criador de Boletos do Bradesco
 
+![](codigo_de_barras.png)
+
 #### Alunos: Rodrigo, Gustavo
 
 ```

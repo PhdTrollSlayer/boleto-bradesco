@@ -1,6 +1,8 @@
 mod helpers;
+mod code;
 
 use helpers::*;
+use code::*;
 
 use chrono::prelude::{TimeZone, Utc};
 use chrono::Duration;
@@ -22,11 +24,8 @@ use argparse::{ArgumentParser, Store};
 
 fn main() {
     // Inicializa valores padrões
-    let mut codigo: String = String::new();
-
     let id = "237".to_string();
     let moeda = "9".to_string();
-    let zero = "0".to_string();
 
     let zero_time = Duration::seconds(Utc.ymd(1997, 10, 7).and_hms(0, 0, 0).timestamp()).num_days();
     let mut venci = String::new();
@@ -68,35 +67,15 @@ fn main() {
 
     let fator_venci = (venci - zero_time).to_string();
 
-    // Cria codigo preliminar e gera o digito verificador
-    codigo.push_str(&id.clone());
-    codigo.push_str(&moeda.clone());
-    codigo.push_str(&fator_venci.clone());
-    codigo.push_str(&valor.clone());
-    codigo.push_str(&agencia.clone());
-    codigo.push_str(&carteira.clone());
-    codigo.push_str(&nosso_numero.clone());
-    codigo.push_str(&conta.clone());
-    codigo.push_str(&zero.clone());
+    // -------------------------------------------------------------
 
-    let digito_verificador = gen_ver_digit(&codigo);
+    let mut codigo = Code::constructor(id, moeda, fator_venci, valor, agencia, carteira, nosso_numero, conta);
 
-    // Cria codigo final e gera o código de barras
-    let mut codigo = String::new();
+    dbg!(codigo.gen_code());
+    codigo.gen_ver_digit();
+    dbg!(codigo.gen_code());
 
-    codigo.push_str(&id.clone());
-    codigo.push_str(&moeda.clone());
-    codigo.push_str(&digito_verificador.clone());
-    codigo.push_str(&fator_venci.clone());
-    codigo.push_str(&valor.clone());
-    codigo.push_str(&agencia.clone());
-    codigo.push_str(&carteira.clone());
-    codigo.push_str(&nosso_numero.clone());
-    codigo.push_str(&conta.clone());
-    codigo.push_str(&zero.clone());
+    codigo.gen_barcode("teste.png");
 
-    println!("{}", codigo);
-
-    gen_barcode(&codigo);
-
+    // -------------------------------------------------------------
 }
