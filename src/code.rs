@@ -64,7 +64,7 @@ impl Code {
     pub fn codify(&self) -> String {
         let op = match self.dg_verificador.clone() {
             Some(x) => x,
-            None => "".to_string(),
+            None => "0".to_string(),
         };
 
         format!(
