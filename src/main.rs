@@ -1,11 +1,10 @@
-mod helpers;
 mod code;
+mod helpers;
 
-use helpers::*;
 use code::*;
+use helpers::*;
 
-use chrono::prelude::{TimeZone, Utc};
-use chrono::Duration;
+use chrono::{Duration, TimeZone, Utc};
 
 use argparse::{ArgumentParser, Store};
 
@@ -43,6 +42,7 @@ fn main() {
         let mut ap = ArgumentParser::new();
 
         ap.set_description("Criador de boletos do Banco Bradesco");
+
         ap.refer(&mut carteira)
             .add_option(&["-r"], Store, "Carteira (2 dígitos)");
         ap.refer(&mut conta)
@@ -51,12 +51,21 @@ fn main() {
             .add_option(&["-v"], Store, "Valor (10 dígitos)");
         ap.refer(&mut agencia)
             .add_option(&["-a"], Store, "Agência (4 dígitos)");
-        ap.refer(&mut nosso_numero)
-            .add_option(&["-n"], Store, "Nosso Numero (11 dígitos, opcional)");
-        ap.refer(&mut venci)
-            .add_option(&["-d"], Store, "Data de vecncimento (Formato: dd/mm/aaaa)");
-        ap.refer(&mut output)
-            .add_option(&["-o"], Store, "Arquivo a ser criado para código de barras (Padrão: codigo_de_barras.png)");
+        ap.refer(&mut nosso_numero).add_option(
+            &["-n"],
+            Store,
+            "Nosso Numero (11 dígitos, opcional)",
+        );
+        ap.refer(&mut venci).add_option(
+            &["-d"],
+            Store,
+            "Data de vecncimento (Formato: dd/mm/aaaa)",
+        );
+        ap.refer(&mut output).add_option(
+            &["-o"],
+            Store,
+            "Arquivo a ser criado para código de barras (Padrão: codigo_de_barras.png)",
+        );
 
         ap.parse_args_or_exit();
     }
@@ -64,7 +73,7 @@ fn main() {
     // Analisa dados e os organiza no formato correto
     let venci = parse_date(&venci);
 
-    if valor.len() < 1 || agencia.len() < 1 || conta.len() < 1 || carteira.len() < 1 {
+    if valor.is_empty() || agencia.is_empty() || conta.is_empty() || carteira.is_empty() {
         panic!("Erro: Algum valor não foi inserido!")
     }
 
@@ -77,15 +86,25 @@ fn main() {
     let fator_venci = (venci - zero_time).to_string();
 
     // -------------------------------------------------------------
-    let mut codigo = Code::constructor(id, moeda, fator_venci, valor, agencia, carteira, nosso_numero, conta);
+    let mut codigo = Code::constructor(
+        id,
+        moeda,
+        fator_venci,
+        valor,
+        agencia,
+        carteira,
+        nosso_numero,
+        conta,
+    );
 
     codigo.gen_ver_digit();
     println!("Dados: {:#?}", codigo);
     println!("Codigo final: {}", codigo.codify());
 
-    codigo.gen_barcode(&output);
-    println!("Código de barras gerado");
+    println!("Linha digitável: {}", codigo.gen_digi_line());
 
+    codigo.gen_barcode(&output);
+    println!("Código de barras gerado com sucesso!");
 
     // -------------------------------------------------------------
 }

@@ -1,10 +1,12 @@
+use crate::helpers::*;
+
+use std::fs::File;
 use std::io::prelude::*;
 use std::io::BufWriter;
-use std::fs::File;
 use std::path::Path;
 
-use barcoders::sym::tf::*;
 use barcoders::generators::image::*;
+use barcoders::sym::tf::*;
 
 /*
 0: Id banco - 3 - 000 para cobrança interna
@@ -33,6 +35,7 @@ pub struct Code {
     zero: String,
 }
 
+#[allow(clippy::too_many_arguments)]
 impl Code {
     pub fn constructor(
         id: String,
@@ -44,7 +47,7 @@ impl Code {
         nosso_numero: String,
         conta: String,
     ) -> Code {
-        Code{
+        Code {
             id,
             moeda,
             dg_verificador: None,
@@ -54,26 +57,67 @@ impl Code {
             carteira,
             nosso_numero,
             conta,
-            zero: "0".to_string()
+            zero: "0".to_string(),
         }
     }
 
     pub fn codify(&self) -> String {
         let op = match self.dg_verificador.clone() {
-            Some(x) => {x},
-            None => {"".to_string()},
+            Some(x) => x,
+            None => "".to_string(),
         };
 
-        format!("{}{}{}{}{}{}{}{}{}{}", self.id,
-                                        self.moeda,
-                                        op,
-                                        self.fator_venci,
-                                        self.valor,
-                                        self.agencia,
-                                        self.carteira,
-                                        self.nosso_numero,
-                                        self.conta,
-                                        self.zero)
+        format!(
+            "{}{}{}{}{}{}{}{}{}{}",
+            self.id,
+            self.moeda,
+            op,
+            self.fator_venci,
+            self.valor,
+            self.agencia,
+            self.carteira,
+            self.nosso_numero,
+            self.conta,
+            self.zero
+        )
+    }
+
+    fn get_campo_livre(&self) -> String {
+        format!(
+            "{}{}{}{}{}",
+            self.agencia, self.carteira, self.nosso_numero, self.conta, self.zero
+        )
+    }
+
+    pub fn gen_digi_line(&self) -> String {
+        let cl = self.get_campo_livre();
+
+        let pri = format!("{}{}{}", self.id, self.moeda, cl.get(..5).unwrap());
+        let sec = format!("{}", cl.get(5..15).unwrap());
+        let ter = format!("{}", cl.get(15..25).unwrap());
+        let qur = self.dg_verificador.clone().unwrap();
+        let qui = format!("{}{}", self.fator_venci, self.valor);
+
+        let mut dg: Vec<String> = Vec::new();
+
+        dg.push(gen_dac(&pri).to_string());
+        dg.push(gen_dac(&sec).to_string());
+        dg.push(gen_dac(&ter).to_string());
+
+        format!(
+            "{}.{}{} {}.{}{} {}.{}{} {} {}",
+            pri.get(..5).unwrap(),
+            pri.get(5..).unwrap(),
+            dg.get(0).unwrap(),
+            sec.get(5..).unwrap(),
+            sec.get(5..).unwrap(),
+            dg.get(1).unwrap(),
+            ter.get(5..).unwrap(),
+            ter.get(5..).unwrap(),
+            dg.get(2).unwrap(),
+            qur,
+            qui
+        )
     }
 
     pub fn gen_ver_digit(&mut self) -> i32 {
@@ -113,6 +157,6 @@ impl Code {
 
         let file = File::create(&Path::new(p)).unwrap();
         let mut writer = BufWriter::new(file);
-        writer.write(&bytes[..]).unwrap();
+        writer.write_all(&bytes[..]).unwrap();
     }
 }
